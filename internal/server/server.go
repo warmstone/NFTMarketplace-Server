@@ -2,28 +2,31 @@ package server
 
 import (
 	"fmt"
+	"log"
 	"net/http"
-	"os"
-	"strconv"
 	"time"
 
-	_ "github.com/joho/godotenv/autoload"
-
+	"NFTMarketplace-Server/configs"
 	"NFTMarketplace-Server/internal/database"
+
+	"gorm.io/gorm"
 )
 
 type Server struct {
 	port int
 
-	db database.Service
+	db *gorm.DB
 }
 
 func NewServer() *http.Server {
-	port, _ := strconv.Atoi(os.Getenv("PORT"))
+	cfg, err := configs.LoadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
 	NewServer := &Server{
-		port: port,
+		port: cfg.Server.Port,
 
-		db: database.New(),
+		db: database.New(cfg.Database),
 	}
 
 	// Declare Server config

@@ -1,0 +1,25 @@
+server:
+  host: "0.0.0.0"
+  port: 8080
+  mode: debug
+
+database:
+  host: "172.25.92.61"
+  port: 5432
+  user: "postgres"
+  password: "pg123456"
+  dbname: "nft_marketplace"
+  sslmode: "disable"
+  timezone: "Asia/Shanghai"
+
+ethereum:
+  ws_url: "wss://sepolia.infura.io/ws/v3/c5c8052027df4442b05c60982f0c9ed4"
+  rpc_url: "https://sepolia.infura.io/v3/c5c8052027df4442b05c60982f0c9ed4"
+  contract_address: "0xc2C651B27d0420632354a435e8da6811F70bA4ee"
+  start_block: 10806394
+  scan_batch_size: 2000
+  rate_limit: 2000
+  max_retries: 3
+
+event:
+  max_events: 100

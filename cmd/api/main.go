@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	_ "NFTMarketplace-Server/init"
 	"NFTMarketplace-Server/internal/server"
 )
 
