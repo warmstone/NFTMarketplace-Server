@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"math"
@@ -47,9 +48,17 @@ func (s *EventService) ScanHistory(ctx context.Context, cfg config.EthereumConfi
 	// 起始块
 	var lastProcessedBlock database.LastProcessedBlock
 	if err := s.db.Model(&database.LastProcessedBlock{}).
-		Order("block_number desc").
+		Where("id = 1").
 		First(&lastProcessedBlock).Error; err != nil {
 		log.Printf("Historical scan: failed to get last processed blcok: %v", err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			processedBlock := database.LastProcessedBlock{
+				BlockNumber: 0,
+			}
+			if err := s.db.Model(&database.LastProcessedBlock{}).Create(processedBlock).Error; err != nil {
+				log.Printf("Historical scan: failed to save last processed block: %v", err)
+			}
+		}
 	}
 	log.Printf("Historical scan: last processed block number: %d", lastProcessedBlock.BlockNumber)
 
@@ -122,7 +131,7 @@ func (s *EventService) ScanHistory(ctx context.Context, cfg config.EthereumConfi
 			}
 			eventCount++
 		}
-		log.Printf("Historical scan: blocks [%d-%d] found %d events", strat, to, len(logs))
+		log.Printf("Historical scan: blocks [%d-%d] found %d events", strat, to, eventCount)
 
 		// 保存最新处理块
 		if err := s.db.Model(&database.LastProcessedBlock{}).Where("id = 1").Updates(map[string]any{"block_number": to}).Error; err != nil {
@@ -282,7 +291,7 @@ func (s *EventService) handleBidPlacedEvent(parsedABI abi.ABI, vLog types.Log) {
 		BidAmount    *big.Int
 		BidUsdAmount *big.Int
 	}
-	if err := parsedABI.UnpackIntoInterface(&decoded, "BidPalced", vLog.Data); err != nil {
+	if err := parsedABI.UnpackIntoInterface(&decoded, "BidPlaced", vLog.Data); err != nil {
 		log.Printf("failed to unpack bid placed event: %v", err)
 		return
 	}
