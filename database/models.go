@@ -55,4 +55,5 @@ type LastProcessedBlock struct {
 	ID          uint      `json:"id" gorm:"primaryKey;autoIncrement"`
 	BlockNumber uint64    `json:"block_number" gorm:"index:idx_lb_block_number;not null"`
 	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }

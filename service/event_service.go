@@ -57,6 +57,12 @@ func (s *EventService) ScanHistory(ctx context.Context, cfg config.EthereumConfi
 	if lastProcessedBlock.BlockNumber != 0 {
 		startBlockNumber = lastProcessedBlock.BlockNumber
 	}
+
+	if startBlockNumber > latestBlockNumber {
+		log.Printf("Historical scan: start block %d > latest block %d, nothing to scan", startBlockNumber, latestBlockNumber)
+		return nil
+	}
+
 	// 批量读取
 	batchSize := cfg.ScanBatchSize
 	// 最大重试次数
@@ -119,10 +125,7 @@ func (s *EventService) ScanHistory(ctx context.Context, cfg config.EthereumConfi
 		log.Printf("Historical scan: blocks [%d-%d] found %d events", strat, to, len(logs))
 
 		// 保存最新处理块
-		newProcessedBlock := database.LastProcessedBlock{
-			BlockNumber: to,
-		}
-		if err := s.db.Model(&database.LastProcessedBlock{}).Create(&newProcessedBlock).Error; err != nil {
+		if err := s.db.Model(&database.LastProcessedBlock{}).Where("id = 1").Updates(map[string]any{"block_number": to}).Error; err != nil {
 			log.Printf("Historical scan: failed to save last processed block: %v", err)
 		}
 	}
