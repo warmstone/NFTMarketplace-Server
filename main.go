@@ -12,6 +12,9 @@ import (
 	"nft-marketplace-server/client"
 	"nft-marketplace-server/config"
 	"nft-marketplace-server/database"
+	"nft-marketplace-server/service"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func main() {
@@ -39,8 +42,14 @@ func main() {
 	defer ethClient.Close()
 
 	// 后台协程扫描历史区块和订阅事件
-	// ctx, cancel := context.WithCancel(context.Background())
-	// defer cancel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// 后台订阅事件
+	contractAddr := common.HexToAddress(cfg.Ethereum.ContractAddr)
+	eventSvc := service.NewEventService(db, ethClient, contractAddr)
+
+	go eventSvc.StartSubscription(ctx, cfg.Ethereum.WSURL)
 
 	// 配置路由
 	handler := api.NewHandler()

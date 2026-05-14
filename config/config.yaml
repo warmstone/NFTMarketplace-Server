@@ -15,7 +15,7 @@ database:
 ethereum:
   ws_url: "wss://sepolia.infura.io/ws/v3/c5c8052027df4442b05c60982f0c9ed4"
   rpc_url: "https://sepolia.infura.io/v3/c5c8052027df4442b05c60982f0c9ed4"
-  contract_address: "0xc2C651B27d0420632354a435e8da6811F70bA4ee"
+  contract_address: "0xBCd0CB07F49e073E6330E931a639353A2479728a"
   start_block: 10806394
   scan_batch_size: 2000
   rate_limit: 2000
