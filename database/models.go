@@ -54,6 +54,5 @@ type AuctionEndedEvent struct {
 type LastProcessedBlock struct {
 	ID          uint      `json:"id" gorm:"primaryKey;autoIncrement"`
 	BlockNumber uint64    `json:"block_number" gorm:"index:idx_lb_block_number;not null"`
-	BlockHash   string    `json:"block_hash" gorm:"index:idx_lb_block_hash;size:66;not null"`
 	CreatedAt   time.Time `json:"created_at"`
 }

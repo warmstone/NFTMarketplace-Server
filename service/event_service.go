@@ -45,14 +45,16 @@ func (s *EventService) ScanHistory(ctx context.Context, cfg config.EthereumConfi
 	latestBlockNumber := latestHeader.Number.Uint64()
 
 	// 起始块
-	var lastProcessedBlock *database.LastProcessedBlock
+	var lastProcessedBlock database.LastProcessedBlock
 	if err := s.db.Model(&database.LastProcessedBlock{}).
 		Order("block_number desc").
 		First(&lastProcessedBlock).Error; err != nil {
 		log.Printf("Historical scan: failed to get last processed blcok: %v", err)
 	}
+	log.Printf("Historical scan: last processed block number: %d", lastProcessedBlock.BlockNumber)
+
 	startBlockNumber := cfg.StartBlock
-	if lastProcessedBlock != nil {
+	if lastProcessedBlock.BlockNumber != 0 {
 		startBlockNumber = lastProcessedBlock.BlockNumber
 	}
 	// 批量读取
@@ -61,7 +63,7 @@ func (s *EventService) ScanHistory(ctx context.Context, cfg config.EthereumConfi
 	maxRetries := cfg.MaxRetries
 	// 请求速率
 	rateLimit := cfg.RateLimit
-	ticker := time.NewTicker(time.Duration(rateLimit))
+	ticker := time.NewTicker(time.Duration(rateLimit) * time.Millisecond)
 	defer ticker.Stop()
 
 	// ABI
@@ -115,6 +117,14 @@ func (s *EventService) ScanHistory(ctx context.Context, cfg config.EthereumConfi
 			eventCount++
 		}
 		log.Printf("Historical scan: blocks [%d-%d] found %d events", strat, to, len(logs))
+
+		// 保存最新处理块
+		newProcessedBlock := database.LastProcessedBlock{
+			BlockNumber: to,
+		}
+		if err := s.db.Model(&database.LastProcessedBlock{}).Create(&newProcessedBlock).Error; err != nil {
+			log.Printf("Historical scan: failed to save last processed block: %v", err)
+		}
 	}
 	return nil
 }
