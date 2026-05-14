@@ -49,6 +49,13 @@ func main() {
 	contractAddr := common.HexToAddress(cfg.Ethereum.ContractAddr)
 	eventSvc := service.NewEventService(db, ethClient, contractAddr)
 
+	// 扫描历史事件
+	go func() {
+		if err := eventSvc.ScanHistory(ctx, cfg.Ethereum); err != nil {
+			log.Printf("history scan error: %v", err)
+		}
+	}()
+
 	go eventSvc.StartSubscription(ctx, cfg.Ethereum.WSURL)
 
 	// 配置路由

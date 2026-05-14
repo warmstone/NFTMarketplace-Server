@@ -4,7 +4,7 @@ server:
   mode: debug
 
 database:
-  host: "172.25.92.61"
+  host: "localhost"
   port: 5432
   user: "postgres"
   password: "pg123456"
