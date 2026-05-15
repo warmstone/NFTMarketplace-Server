@@ -34,3 +34,17 @@ func (h *Handler) ListAuctions(c *gin.Context) {
 
 	Success(c, result)
 }
+
+func (h *Handler) ListBidRecord(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	auctionId, _ := strconv.Atoi(c.Query("auction_id"))
+
+	result, err := h.EventSvc.ListBidRecord(page, pageSize, auctionId)
+	if err != nil {
+		Error(c, 500, err.Error())
+		return
+	}
+
+	Success(c, result)
+}

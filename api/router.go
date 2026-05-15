@@ -13,6 +13,7 @@ func SetupRouter(h *Handler) *gin.Engine {
 	v1 := r.Group("/api/v1")
 	{
 		v1.GET("/auction", h.ListAuctions)
+		v1.GET("/bid", h.ListBidRecord)
 	}
 
 	return r

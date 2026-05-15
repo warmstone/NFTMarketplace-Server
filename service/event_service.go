@@ -30,6 +30,13 @@ type ListAuctionResponse struct {
 	Auctions []database.AuctionCreatedEvent
 }
 
+type ListBidResponse struct {
+	Page      int
+	PageSize  int
+	Total     uint64
+	BidRecord []database.BidPlacedEvent
+}
+
 type EventService struct {
 	db           *gorm.DB
 	client       *ethclient.Client
@@ -42,6 +49,39 @@ func NewEventService(db *gorm.DB, client *ethclient.Client, contractAddr common.
 		client:       client,
 		contractAddr: contractAddr,
 	}
+}
+
+func (s *EventService) ListBidRecord(page, pageSize int, auctionId int) (*ListBidResponse, error) {
+	query := s.db.Model(&database.BidPlacedEvent{}).Where("auction_id", auctionId)
+
+	var total int64
+	var bidRecords []database.BidPlacedEvent
+	if err := query.Count(&total).Error; err != nil {
+		log.Printf("failed to count auctions: %v", err)
+		return &ListBidResponse{
+			Page:      page,
+			PageSize:  pageSize,
+			Total:     0,
+			BidRecord: bidRecords,
+		}, nil
+	}
+
+	if err := query.Scopes(util.Paginate(page, pageSize)).Order("id desc").Find(&bidRecords).Error; err != nil {
+		log.Printf("failed to query auctions: %v", err)
+		return &ListBidResponse{
+			Page:      page,
+			PageSize:  pageSize,
+			Total:     0,
+			BidRecord: bidRecords,
+		}, nil
+	}
+
+	return &ListBidResponse{
+		Page:      page,
+		PageSize:  pageSize,
+		Total:     uint64(total),
+		BidRecord: bidRecords,
+	}, nil
 }
 
 func (s *EventService) ListAuctions(page, pageSize int, seller string, sort string, desc bool) (*ListAuctionResponse, error) {
