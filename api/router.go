@@ -15,6 +15,7 @@ func SetupRouter(h *Handler) *gin.Engine {
 		v1.GET("/auction", h.ListAuctions)
 		v1.GET("/bid", h.ListBidRecord)
 		v1.GET("/queryStatistics", h.QueryStatistics)
+		v1.GET("/getNFTsForOwner", h.GetNFTsForOwner)
 	}
 
 	return r

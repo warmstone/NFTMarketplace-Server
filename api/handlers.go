@@ -15,6 +15,16 @@ func NewHandler(es *service.EventService) *Handler {
 	return &Handler{EventSvc: es}
 }
 
+func (h *Handler) GetNFTsForOwner(c *gin.Context) {
+	accountAddr := c.Query("account_addr")
+	result, err := h.EventSvc.GetNFTsForOwner(accountAddr)
+	if err != nil {
+		Error(c, 500, err.Error())
+		return
+	}
+	Success(c, result)
+}
+
 func (h *Handler) ListAuctions(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))

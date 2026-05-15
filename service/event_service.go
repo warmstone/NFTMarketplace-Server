@@ -2,11 +2,14 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"math"
 	"math/big"
+	"net/http"
 	"nft-marketplace-server/config"
 	"nft-marketplace-server/contracts"
 	"nft-marketplace-server/database"
@@ -46,6 +49,20 @@ type EventService struct {
 	db           *gorm.DB
 	client       *ethclient.Client
 	contractAddr common.Address
+}
+
+func (s *EventService) GetNFTsForOwner(accountAddr string) (map[string]interface{}, error) {
+	url := fmt.Sprintf("https://eth-sepolia.g.alchemy.com/v2/aHmenwxA60I9vqrSaog1W/getNFTsForOwner?owner=%s", accountAddr)
+	req, _ := http.NewRequest("GET", url, nil)
+	res, _ := http.DefaultClient.Do(req)
+	defer res.Body.Close()
+	body, _ := io.ReadAll(res.Body)
+	var result map[string]interface{}
+	err := json.Unmarshal([]byte(string(body)), &result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (s *EventService) QueryStatistics() (*StatisticsResponse, error) {
