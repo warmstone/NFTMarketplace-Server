@@ -48,3 +48,12 @@ func (h *Handler) ListBidRecord(c *gin.Context) {
 
 	Success(c, result)
 }
+
+func (h *Handler) QueryStatistics(c *gin.Context) {
+	result, err := h.EventSvc.QueryStatistics()
+	if err != nil {
+		Error(c, 500, err.Error())
+		return
+	}
+	Success(c, result)
+}

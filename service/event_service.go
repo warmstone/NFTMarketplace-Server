@@ -37,10 +37,28 @@ type ListBidResponse struct {
 	BidRecord []database.BidPlacedEvent
 }
 
+type StatisticsResponse struct {
+	AuctionCount int64
+	BidCount     int64
+}
+
 type EventService struct {
 	db           *gorm.DB
 	client       *ethclient.Client
 	contractAddr common.Address
+}
+
+func (s *EventService) QueryStatistics() (*StatisticsResponse, error) {
+	var auctionCount int64
+	if err := s.db.Model(&database.AuctionCreatedEvent{}).Count(&auctionCount).Error; err != nil {
+		return nil, fmt.Errorf("failed to count auction: %w", err)
+	}
+	var bidCount int64
+	if err := s.db.Model(&database.BidPlacedEvent{}).Count(&bidCount).Error; err != nil {
+		return nil, fmt.Errorf("failed to count bid: %w", err)
+	}
+
+	return &StatisticsResponse{AuctionCount: auctionCount, BidCount: bidCount}, nil
 }
 
 func NewEventService(db *gorm.DB, client *ethclient.Client, contractAddr common.Address) *EventService {
