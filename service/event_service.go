@@ -10,6 +10,7 @@ import (
 	"nft-marketplace-server/config"
 	"nft-marketplace-server/contracts"
 	"nft-marketplace-server/database"
+	"nft-marketplace-server/util"
 	"strings"
 	"time"
 
@@ -21,6 +22,13 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
+
+type ListAuctionResponse struct {
+	Page     int
+	PageSize int
+	Total    uint64
+	Auctions []database.AuctionCreatedEvent
+}
 
 type EventService struct {
 	db           *gorm.DB
@@ -34,6 +42,44 @@ func NewEventService(db *gorm.DB, client *ethclient.Client, contractAddr common.
 		client:       client,
 		contractAddr: contractAddr,
 	}
+}
+
+func (s *EventService) ListAuctions(page, pageSize int, seller string, sort string, desc bool) (*ListAuctionResponse, error) {
+	query := s.db.Model(&database.AuctionCreatedEvent{})
+	if seller != "" {
+		query.Where("seller = ?", seller)
+	}
+
+	var total int64
+	var auctions []database.AuctionCreatedEvent
+	if err := query.Count(&total).Error; err != nil {
+		log.Printf("failed to count auctions: %v", err)
+		return &ListAuctionResponse{
+			Page:     page,
+			PageSize: pageSize,
+			Total:    0,
+			Auctions: auctions,
+		}, nil
+	}
+
+	if err := query.Scopes(util.Paginate(page, pageSize)).Order(
+		clause.OrderByColumn{Column: clause.Column{Name: sort}, Desc: desc},
+	).Find(&auctions).Error; err != nil {
+		log.Printf("failed to query auctions: %v", err)
+		return &ListAuctionResponse{
+			Page:     page,
+			PageSize: pageSize,
+			Total:    0,
+			Auctions: auctions,
+		}, nil
+	}
+
+	return &ListAuctionResponse{
+		Page:     page,
+		PageSize: pageSize,
+		Total:    uint64(total),
+		Auctions: auctions,
+	}, nil
 }
 
 // 扫描历史数据
@@ -53,9 +99,9 @@ func (s *EventService) ScanHistory(ctx context.Context, cfg config.EthereumConfi
 		log.Printf("Historical scan: failed to get last processed blcok: %v", err)
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			processedBlock := database.LastProcessedBlock{
-				BlockNumber: 0,
+				BlockNumber: 10836704,
 			}
-			if err := s.db.Model(&database.LastProcessedBlock{}).Create(processedBlock).Error; err != nil {
+			if err := s.db.Model(&database.LastProcessedBlock{}).Create(&processedBlock).Error; err != nil {
 				log.Printf("Historical scan: failed to save last processed block: %v", err)
 			}
 		}
@@ -266,11 +312,11 @@ func (s *EventService) handleAuctionEndedEvent(parsedABI abi.ABI, vLog types.Log
 		TxHash:       vLog.TxHash.Hex(),
 		TxIndex:      vLog.TxIndex,
 		LogIndex:     vLog.Index,
-		AuctionId:    decoded.AuctionId,
+		AuctionId:    decoded.AuctionId.String(),
 		Buyer:        decoded.Buyer.Hex(),
 		TokenAddress: decoded.TokenAddress.Hex(),
-		Price:        decoded.Price,
-		UsdPrice:     decoded.UsdPrice,
+		Price:        decoded.Price.String(),
+		UsdPrice:     decoded.UsdPrice.String(),
 	}
 
 	if err := s.db.Clauses(
@@ -306,11 +352,11 @@ func (s *EventService) handleBidPlacedEvent(parsedABI abi.ABI, vLog types.Log) {
 		TxHash:       vLog.TxHash.Hex(),
 		TxIndex:      vLog.TxIndex,
 		LogIndex:     vLog.Index,
-		AuctionId:    decoded.AuctionId,
+		AuctionId:    decoded.AuctionId.String(),
 		Bidder:       decoded.Bidder.Hex(),
 		TokenAddress: decoded.TokenAddress.Hex(),
-		BidAmount:    decoded.BidAmount,
-		BidUsdAmount: decoded.BidUsdAmount,
+		BidAmount:    decoded.BidAmount.String(),
+		BidUsdAmount: decoded.BidUsdAmount.String(),
 	}
 
 	if err := s.db.Clauses(
@@ -347,11 +393,11 @@ func (s *EventService) handleAuctionCreatedEvent(parsedABI abi.ABI, vLog types.L
 		TxHash:        vLog.TxHash.Hex(),
 		TxIndex:       vLog.TxIndex,
 		LogIndex:      vLog.Index,
-		AuctionId:     decoded.AuctionId,
+		AuctionId:     decoded.AuctionId.String(),
 		Seller:        decoded.Seller.Hex(),
 		NFTContract:   decoded.NFTContract.Hex(),
-		TokenId:       decoded.TokenId,
-		StartPriceUsd: decoded.StartPriceUsd,
+		TokenId:       decoded.TokenId.String(),
+		StartPriceUsd: decoded.StartPriceUsd.String(),
 		EndTime:       time.Unix(decoded.EndTime.Int64(), 0),
 	}
 

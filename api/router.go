@@ -10,8 +10,9 @@ func SetupRouter(h *Handler) *gin.Engine {
 		Success(ctx, gin.H{"status": "ok"})
 	})
 
-	// v1 := r.Group("/api/v1")
+	v1 := r.Group("/api/v1")
 	{
+		v1.GET("/auction", h.ListAuctions)
 	}
 
 	return r

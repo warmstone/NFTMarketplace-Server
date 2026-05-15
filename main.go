@@ -59,7 +59,7 @@ func main() {
 	go eventSvc.StartSubscription(ctx, cfg.Ethereum.WSURL)
 
 	// 配置路由
-	handler := api.NewHandler()
+	handler := api.NewHandler(eventSvc)
 	router := api.SetupRouter(handler)
 
 	// 启动 HTTP 服务器
